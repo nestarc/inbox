@@ -1,5 +1,13 @@
 # @nestarc/inbox MVP 검증 기록
 
+## 0.2.0 OIDC 게시 완료 — 2026년 10월 28일
+
+커밋 `ca73c142c3857967b9d30a6063736f5805331bb8`을 main에 직접 반영했다. [main CI 40696667967](https://github.com/nestarc/inbox/actions/runs/40696667967)와 [v0.2.0 Release 실행 40697225571](https://github.com/nestarc/inbox/actions/runs/40697225571)이 모두 성공했다. Node 22/24 × PostgreSQL 16/18의 네 조합, tarball 소비자·예제 8종, 별도 운영 복구 job을 통과한 뒤 같은 tarball을 npm Trusted Publishing으로 게시했다. 기존 버전을 확인하고 건너뛴 실행이 아니라 `Publish the exact verified tarball` 단계가 실제로 성공한 첫 OIDC 게시다.
+
+공개 레지스트리에서 `@nestarc/inbox@0.2.0`과 `latest: 0.2.0`을 확인했으며, 배포 워크플로우의 무결성 확인도 성공했다. 배포물은 98개 파일, 압축 해제 크기 539,988바이트이며 SHA-512 integrity는 `sha512-0Y/Q098uJW4nxZ5/mndq7ufxMeS+SctgQ9oNnQpNu+nR72ZMaOy281ttEh44iwTy5nqMC15UMNehdHykjeb89A==`다.
+
+[npm provenance](https://registry.npmjs.org/-/npm/v1/attestations/@nestarc%2finbox@0.2.0)의 SLSA v1 statement에 같은 tarball digest, `refs/tags/v0.2.0`, `.github/workflows/release.yml`, 위 commit과 Release 실행 URL이 기록되어 있다. 따라서 0.1.0 기록에서 남겼던 Trusted Publisher의 첫 실제 게시·provenance 발급 검증은 완료했다. [GitHub Release](https://github.com/nestarc/inbox/releases/tag/v0.2.0)는 같은 커밋을 가리킨다. 이 게시 결과 기록은 릴리즈 이후 문서 갱신이며 이미 게시된 tarball을 변경하지 않는다.
+
 ## 0.2.0 후속 로컬 검증 — 2026년 10월 28일
 
 0.1.0 이후 테스트 helper와 운영 복구 검증을 추가했다. SQL schema v2와 기존 처리 계약은 유지한다. 이 절은 실제 실행한 로컬 검증이며, 아래 과거 기록의 미확인 항목 중 이 결과가 다루는 범위를 갱신한다. **실제 서비스 2곳 도입과 피드백(M5)은 요청에 따라 이번 작업에서 제외했으며 완료하지 않았다.**

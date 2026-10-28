@@ -22,6 +22,7 @@ Adds application integration-test helpers and reproducible operational recovery 
 ### Release automation
 
 - Wait up to 20 minutes for npm's post-publication scanning before verifying registry integrity. Pending 404 responses are retried every 30 seconds; integrity mismatches and other lookup failures still stop immediately. This prevents successful uploads from being reported as failed after only 16 seconds. No runtime API or schema changes.
+- Verified the first actual npm Trusted Publishing release with 0.2.0: the [release workflow](https://github.com/nestarc/inbox/actions/runs/40697225571) passed all gates, published the tested tarball through OIDC, and confirmed registry integrity. npm exposes SLSA provenance tied to the release tag and commit. [Publication record](docs/validation.md)
 
 ## 0.1.0 — 2026-10-28
 
