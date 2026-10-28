@@ -1,0 +1,81 @@
+name: Release candidate validation
+
+on:
+  workflow_call:
+    outputs:
+      artifact-name:
+        description: The exact tarball installed by every validation job
+        value: ${{ jobs.build.outputs.artifact-name }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build one candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      artifact-name: inbox-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run test:release
+      - run: npm run build
+      - run: npm run typecheck
+      - name: Pack one candidate and record its identity
+        run: node scripts/release-artifact.mjs pack "$RUNNER_TEMP/candidate"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: inbox-candidate-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/candidate/
+          if-no-files-found: error
+          retention-days: 14
+
+  matrix:
+    name: Node ${{ matrix.node }} / PostgreSQL ${{ matrix.postgres }}
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22", "24"]
+        postgres: ["16", "18"]
+    env:
+      INBOX_TEST_POSTGRES_IMAGE: postgres:${{ matrix.postgres }}-alpine
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.build.outputs.artifact-name }}
+          path: ${{ runner.temp }}/candidate
+      - name: Select the downloaded candidate
+        run: |
+          echo "INBOX_RELEASE_TARBALL=$RUNNER_TEMP/candidate/package.tgz" >> "$GITHUB_ENV"
+          echo "INBOX_RELEASE_METADATA=$RUNNER_TEMP/candidate/metadata.json" >> "$GITHUB_ENV"
+      - name: Verify original candidate
+        run: node scripts/release-artifact.mjs verify "$INBOX_RELEASE_TARBALL" "$INBOX_RELEASE_METADATA"
+      - run: npm ci
+      - run: npm test
+      - run: npm run test:integration
+      - name: Test consumers of the exact candidate
+        run: npm run test:package
+      - name: Test all broker and Nest integration examples
+        if: matrix.node == '24' && matrix.postgres == '16'
+        run: npm run test:examples
+      - name: Verify the candidate was not changed by tests
+        run: node scripts/release-artifact.mjs verify "$INBOX_RELEASE_TARBALL" "$INBOX_RELEASE_METADATA"

@@ -1,0 +1,120 @@
+{
+  "kind": "nestarc-inbox-local-baseline",
+  "measuredAt": "2026-10-28T11:49:53.903Z",
+  "packageVersion": "0.1.0-preview.1",
+  "metadata": {
+    "node": "v24.22.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuModel": "Apple M1 Pro",
+    "hostLogicalCpus": 10,
+    "postgres": "PostgreSQL 16.15 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+    "image": "postgres:16-alpine",
+    "storage": "Docker tmpfs; loopback forwarded TCP",
+    "prisma": "7.10.1",
+    "connectionMax": 12,
+    "fixtureAdminConnectionMax": 2,
+    "acceptConcurrency": 8,
+    "workerConcurrency": 4,
+    "iterationsPerScenario": 500,
+    "payloadBytes": 265,
+    "retainedPayloads": "purged tombstones",
+    "warmup": "SELECT 1 at accept concurrency before each scenario; no warmup inbox writes",
+    "workerEffect": "One INSERT through the same Prisma transaction as inbox completion"
+  },
+  "scenarios": [
+    {
+      "name": "fresh_unique",
+      "retainedCompletedReceipts": 0,
+      "iterations": 500,
+      "expectedUniqueMessages": 500,
+      "duplicateRatio": 0,
+      "accepted": 500,
+      "duplicates": 0,
+      "accept": {
+        "elapsedMs": 357.016,
+        "requestsPerSecond": 1400.499,
+        "latencyMs": {
+          "p50": 3.903,
+          "p95": 11.612,
+          "p99": 37.17
+        }
+      },
+      "worker": {
+        "drainMs": 921.193,
+        "completedPerSecond": 542.775,
+        "batches": 125,
+        "committedEffects": 500
+      },
+      "errors": {
+        "accept": {},
+        "worker": {}
+      },
+      "verified": true
+    },
+    {
+      "name": "retained_10000_unique",
+      "retainedCompletedReceipts": 10000,
+      "iterations": 500,
+      "expectedUniqueMessages": 500,
+      "duplicateRatio": 0,
+      "accepted": 500,
+      "duplicates": 0,
+      "accept": {
+        "elapsedMs": 211.955,
+        "requestsPerSecond": 2358.995,
+        "latencyMs": {
+          "p50": 3.163,
+          "p95": 4.602,
+          "p99": 6.723
+        }
+      },
+      "worker": {
+        "drainMs": 894.918,
+        "completedPerSecond": 558.711,
+        "batches": 125,
+        "committedEffects": 500
+      },
+      "errors": {
+        "accept": {},
+        "worker": {}
+      },
+      "verified": true
+    },
+    {
+      "name": "retained_10000_duplicates_90pct",
+      "retainedCompletedReceipts": 10000,
+      "iterations": 500,
+      "expectedUniqueMessages": 50,
+      "duplicateRatio": 0.9,
+      "accepted": 50,
+      "duplicates": 450,
+      "accept": {
+        "elapsedMs": 242.491,
+        "requestsPerSecond": 2061.929,
+        "latencyMs": {
+          "p50": 3.726,
+          "p95": 5.29,
+          "p99": 7.027
+        }
+      },
+      "worker": {
+        "drainMs": 88.991,
+        "completedPerSecond": 561.857,
+        "batches": 13,
+        "committedEffects": 50
+      },
+      "errors": {
+        "accept": {},
+        "worker": {}
+      },
+      "verified": true
+    }
+  ],
+  "limitations": [
+    "One local sample on a disposable tmpfs database; no SLA or production capacity claim.",
+    "Scenarios run in a fixed order; later scenarios may benefit from JIT/cache warmup.",
+    "No sustained load, network faults, broker traffic, cold-cache runs, or fairness measurement.",
+    "Receipt seed and schema preparation are excluded from measurements."
+  ]
+}

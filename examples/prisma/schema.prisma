@@ -1,0 +1,29 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ExampleOrder {
+  id       String @id
+  tenantId String @map("tenant_id")
+  @@map("inbox_example_orders")
+}
+
+model ExampleProjection {
+  tenantId String @map("tenant_id")
+  orderId  String @map("order_id")
+  @@id([tenantId, orderId])
+  @@map("inbox_example_projections")
+}
+
+model ExampleReceipt {
+  tenantId String @map("tenant_id")
+  orderId  String @map("order_id")
+  @@id([tenantId, orderId])
+  @@map("inbox_example_receipts")
+}

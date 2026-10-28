@@ -1,0 +1,11 @@
+{
+  "name": "@nestarc/reliability-core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internal source workspace for reliability primitives; compiled into each consuming package.",
+  "license": "MIT",
+  "type": "commonjs",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

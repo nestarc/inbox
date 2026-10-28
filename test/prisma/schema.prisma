@@ -1,0 +1,16 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// The inbox table is installed by its SQL migration, not Prisma schema sync.
+model Probe {
+  id    String @id
+  value Int    @default(0)
+
+  @@map("inbox_test_probe")
+}

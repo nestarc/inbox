@@ -1,0 +1,113 @@
+name: Release
+
+# npm Trusted Publisher: nestarc/inbox, release.yml, environment npm.
+# Manual dispatch runs the full gate and npm dry-run without publishing.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Verify release version and source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.ref.outputs.version }}
+      dist-tag: ${{ steps.ref.outputs.dist-tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - name: Require matching version, tag, prerelease flag, and main ancestry
+        id: ref
+        run: node scripts/release-artifact.mjs ref
+
+  validation:
+    name: Validate the candidate on every supported runtime
+    needs: verify
+    uses: ./.github/workflows/release-validation.yml
+
+  dry-run:
+    name: Validate npm publication without publishing
+    if: github.event_name == 'workflow_dispatch'
+    needs: [verify, validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DIST_TAG: ${{ needs.verify.outputs.dist-tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.validation.outputs.artifact-name }}
+          path: ${{ runner.temp }}/candidate
+      - run: node scripts/release-artifact.mjs verify "$RUNNER_TEMP/candidate/package.tgz" "$RUNNER_TEMP/candidate/metadata.json"
+      - run: npm publish "$RUNNER_TEMP/candidate/package.tgz" --ignore-scripts --access public --tag "$DIST_TAG" --dry-run
+
+  publish:
+    name: Publish the tested tarball using npm OIDC
+    if: github.event_name == 'release' && github.event.action == 'published' && github.repository == 'nestarc/inbox'
+    needs: [verify, validation]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DIST_TAG: ${{ needs.verify.outputs.dist-tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+          check-latest: true
+          package-manager-cache: false
+          registry-url: https://registry.npmjs.org
+      - name: Require an npm CLI with Trusted Publishing support
+        run: |
+          node --input-type=module -e '
+            import { execFileSync } from "node:child_process";
+            const [major, minor, patch] = execFileSync("npm", ["--version"], { encoding: "utf8" }).trim().split(".").map(Number);
+            if (!(major > 11 || major === 11 && (minor > 5 || minor === 5 && patch >= 1))) {
+              throw new Error("npm >= 11.5.1 is required for Trusted Publishing");
+            }
+          '
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.validation.outputs.artifact-name }}
+          path: ${{ runner.temp }}/candidate
+      - name: Verify the candidate and reject conflicting published bytes
+        id: registry
+        run: node scripts/release-artifact.mjs registry-check "$RUNNER_TEMP/candidate/package.tgz" "$RUNNER_TEMP/candidate/metadata.json"
+      # No dependency installation, build, repack, or lifecycle scripts here.
+      - name: Publish the exact verified tarball
+        if: steps.registry.outputs.action == 'publish'
+        run: npm publish "$RUNNER_TEMP/candidate/package.tgz" --ignore-scripts --provenance --access public --tag "$DIST_TAG"
+      - name: Verify registry integrity matches the tested tarball
+        run: node scripts/release-artifact.mjs verify-published "$RUNNER_TEMP/candidate/package.tgz" "$RUNNER_TEMP/candidate/metadata.json"
