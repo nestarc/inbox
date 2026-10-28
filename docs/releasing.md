@@ -53,7 +53,7 @@ CI와 Release는 `release-validation.yml`을 공유한다. Node 22에서 한 번
 
 Node 22/24 × PostgreSQL 16/18의 네 job이 같은 tarball을 내려받아 실제 DB 통합/복구 테스트와 독립 consumer 설치를 실행한다. Node 24/PostgreSQL 16에서는 tarball 내부 예제 8종을 실제 임시 브로커와 함께 검사한다. 각 consumer는 복사본을 읽기 전용으로 사용하며 실행 전후 원본·복사본·metadata 변경을 검사한다.
 
-네 조합이 모두 성공해야 배포 job이 실행된다. 배포 job에서는 의존성 설치·빌드·재패킹을 하지 않고 해당 tarball을 `--ignore-scripts --provenance`로 게시한다. 게시 후 레지스트리의 integrity가 검증한 tarball과 같은지 확인한다.
+네 조합과 별도 Node 24/PostgreSQL 16 운영 복구 job이 모두 성공해야 배포 job이 실행된다. 운영 job은 같은 커밋을 빌드하여 TCP 단절·blackhole, 연결 풀 포화, SIGTERM 종료, 실제 standby 승격, 제한된 tablespace 공간 고갈, RabbitMQ 재시작·retry·DLQ를 확인한다. 지속 부하 benchmark는 별도 수동 측정이며 CI의 성능 합격 기준으로 사용하지 않는다. 배포 job에서는 의존성 설치·빌드·재패킹을 하지 않고 해당 tarball을 `--ignore-scripts --provenance`로 게시한다. 게시 후 레지스트리의 integrity가 검증한 tarball과 같은지 확인한다.
 
 npm은 게시 요청을 받은 뒤 설치 가능 상태가 되기 전에 패키지를 검사한다. 공식 [게시 시점 검사 안내](https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata/)에 따르면 보통 약 5분, 혼잡하거나 추가 검토가 필요하면 15분 이상 걸릴 수 있다. 게시 성공 직후의 404만으로 실패나 미게시를 판단하지 않는다. 워크플로우는 30초 간격으로 진행 상황을 출력하며 최대 20분 동안 공개 여부와 integrity를 확인하고, 배포 job에는 총 30분을 허용한다. 내용 불일치와 404 이외의 조회 오류는 즉시 실패한다.
 

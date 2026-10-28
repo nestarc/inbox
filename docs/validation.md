@@ -1,5 +1,30 @@
 # @nestarc/inbox MVP 검증 기록
 
+## 0.2.0 후속 로컬 검증 — 2026년 10월 28일
+
+0.1.0 이후 테스트 helper와 운영 복구 검증을 추가했다. SQL schema v2와 기존 처리 계약은 유지한다. 이 절은 실제 실행한 로컬 검증이며, 아래 과거 기록의 미확인 항목 중 이 결과가 다루는 범위를 갱신한다. **실제 서비스 2곳 도입과 피드백(M5)은 요청에 따라 이번 작업에서 제외했으며 완료하지 않았다.**
+
+| 검사 | 결과와 조건 |
+| --- | --- |
+| 빌드·타입·단위 테스트 | Node 24.22.1, 단위 105개 통과. 새 helper 단위 20개 포함 |
+| 테스트 helper DB 검증 | PostgreSQL 16, 실제 retry→완료·DEAD 관측·scope/중복 수신 3개 통과 |
+| 독립 tarball 소비자 | 0.2.0을 별도 앱에 설치, strict TypeScript·CJS·ESM과 testing subpath, 실제 rollback→retry→완료 통과 |
+| 릴리즈 검증 | 46개 통과, 새 testing export와 필수 배포 파일 검사 포함 |
+| TCP disconnect·blackhole | PostgreSQL 16/18에서 transaction 롤백과 같은 Prisma client의 재연결 후 단일 업무/outbox 효과 확인 |
+| pool 포화 | 두 연결을 약 2.5초 점유하여 claim·수신 실패를 확인하고 해제 후 재전달·처리 회복 |
+| SIGTERM | 실제 자식 프로세스의 약 2.5초 정상 drain과 700ms 제한의 멈춘 handler 중단·후속 worker 복구 |
+| PostgreSQL failover | 실제 physical standby의 WAL replay 확인 후 primary SIGKILL·승격, receipt 3건의 중복 방지와 미완료 claim 회복 |
+| 디스크 공간 부족 | 16 MiB 업무 tablespace에서 실제 SQLSTATE `53100`, 업무/outbox 롤백, 공간 확보 후 retry 성공 |
+| RabbitMQ 복구 | 실제 재시작 3회, 미ACK 재전달·영속 retry/TTL·retry 소진·DLQ 등 5개 시나리오 통과 |
+
+네트워크·pool·SIGTERM 테스트는 [test/operations](../test/operations)에 있다. blackhole 시험은 driver `query_timeout=500ms`, `connectionTimeoutMillis=300ms`를 명시했다. 네트워크가 무기한 멈춰도 모든 기본 설정이 같은 시간 안에 복구한다는 보장은 아니다. PostgreSQL 18에서 이 다섯 테스트를 함께 실행한 시간은 약 10초였다.
+
+[DB 운영 검증](db-operations.md)은 standby에 도착한 WAL을 기준으로 새 endpoint에 연결하는 절차를 검사한다. 비동기 복제에서 아직 전달되지 않은 commit의 무손실, 자동 장애 조치 시스템, WAL 볼륨 고갈을 보장하지 않는다. [브로커 복구](broker-recovery.md)는 RabbitMQ 단일 classic queue이며 Kafka rebalance·AWS SQS 운영 구성·브로커 클러스터 failover는 별도 배포 검증 대상이다.
+
+`npm run test:operations`, `npm run test:operations:database`, `npm run test:broker-recovery`로 재현한다. DB와 브로커는 임의 이름·loopback 주소의 일회용 Docker fixture를 만들고 종료 시 제거한다. 일반 애플리케이션의 `DATABASE_URL`은 사용하지 않는다. CI와 Release의 별도 Node 24/PostgreSQL 16 job에서도 이 세 검증을 실행한다.
+
+[디스크 기반 지속 부하 측정](benchmarks/2026-10-28-sustained-local.md)은 수신과 worker를 동시에 실행한 두 표본을 보존한다. 각 실행에서 120초 동안 19,199건을 수신했고 의도적 retry 385건을 거쳐 같은 수의 업무 효과와 완료 기록을 확인했다. 누락·중복 효과·예상 밖 오류는 0건이었다. 최대 backlog는 7,613/7,750건, 수신 종료 후 회복은 94.675/94.191초, 수신 p95는 20.615/21.736ms였다. 공유 pool 대기와 hot/cold tenant 지연을 기록했고 payload 24,199건 정리 뒤 fingerprint 보존·중복 검사 40/40을 확인했다. 각 표본은 약 214초이며 수시간·수일 soak test나 운영 처리량 보장은 아니다. 컨테이너와 전용 디스크 볼륨 정리를 확인했다.
+
 ## 0.1.0 최초 npm 게시 — 2026년 10월 28일
 
 커밋 `15b01813f009bb012f88a081bdd4a7705befc90e`의 [CI 실행 40686580892](https://github.com/nestarc/inbox/actions/runs/40686580892)이 전체 성공했다. Node 22/24 × PostgreSQL 16/18 네 조합과 예제 8종이 검증한 동일 tarball을 대화형 2FA 인증으로 최초 게시했다. npm의 검사 대기 후 공개 레지스트리의 `@nestarc/inbox@0.1.0`과 `latest: 0.1.0`을 확인했고, 실제 내려받은 tarball의 SHA-512가 CI 산출물과 일치했다. 배포물은 87개 파일, 105,710바이트이며 SHA-256은 `9bd1b4292cb62a72fdff0d1b7fc4cf01a5f7a4967003022b28dd0f4d6f192c62`다.

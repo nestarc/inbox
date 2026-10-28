@@ -23,6 +23,8 @@ const required = [
   "package.json",
   "dist/index.js",
   "dist/index.d.ts",
+  "dist/testing/index.js",
+  "dist/testing/index.d.ts",
   "src/sql/create-inbox-table.sql",
   "src/sql/migrate-v1-to-v2.sql",
 ];
@@ -153,6 +155,11 @@ export function inspectArchive(tarballPath) {
   );
   assert.equal(manifest.main, "dist/index.js");
   assert.equal(manifest.types, "dist/index.d.ts");
+  assert.deepEqual(manifest.exports?.["./testing"], {
+    types: "./dist/testing/index.d.ts",
+    require: "./dist/testing/index.js",
+    default: "./dist/testing/index.js",
+  });
   for (const file of ["create-inbox-table.sql", "migrate-v1-to-v2.sql"]) {
     assert.equal(manifest.exports?.[`./sql/${file}`], `./src/sql/${file}`);
   }

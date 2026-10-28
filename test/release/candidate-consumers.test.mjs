@@ -32,6 +32,8 @@ async function fixture(t, { version = rootManifest.version } = {}) {
     "package.json": JSON.stringify({ ...rootManifest, version }),
     "dist/index.js": "module.exports = {};\n",
     "dist/index.d.ts": "export {};\n",
+    "dist/testing/index.js": "module.exports = {};\n",
+    "dist/testing/index.d.ts": "export {};\n",
     "src/sql/create-inbox-table.sql": "-- candidate schema\n",
     "src/sql/migrate-v1-to-v2.sql": "-- candidate migration\n",
     "examples/package.json": JSON.stringify({

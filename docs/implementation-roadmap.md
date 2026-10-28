@@ -6,6 +6,8 @@
 
 Preview.1 추가 범위는 [사용법](usage.md)의 완료 메시지 replay와 tenancy adapter, [예제](../examples/README.md)의 브로커·idempotency 연동을 따른다. 기존 AC12의 COMPLETED requeue 금지는 유지하며, 새 replay API는 원본을 보존한 별도 receipt를 생성한다.
 
+0.2.0 후속 작업에서는 [테스트 helper](testing.md), 실제 네트워크·프로세스 종료 복구, [standby 승격과 디스크 고갈](db-operations.md), [RabbitMQ 재시작·retry·DLQ](broker-recovery.md) 검증과 디스크 기반 지속 부하 측정 도구를 추가했다. 아래 단계와 초기 착수 목록은 원래 계획이며, 최신 실행 결과는 [검증 기록](validation.md)을 따른다. **M5 실제 서비스 도입·피드백은 이번 작업에서 제외했으며 완료하지 않았다.**
+
 ## 단계별 산출물
 
 | 단계 | 기간 가정 | 산출물 | 다음 단계 진입 기준 |

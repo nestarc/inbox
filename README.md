@@ -4,9 +4,9 @@
 
 A transactional inbox for **NestJS, Prisma, and PostgreSQL**. Store an incoming event durably, acknowledge its delivery, then commit your business writes and inbox completion in one database transaction. Retries and crash recovery use the same durable record.
 
-**Version `0.1.0` · SQL schema v2.** APIs and schema may change before 1.0; review the [changelog](CHANGELOG.md) and migration steps when upgrading.
+**Version `0.2.0` · SQL schema v2.** APIs and schema may change before 1.0; review the [changelog](CHANGELOG.md) and migration steps when upgrading.
 
-[Install](#1-install-the-package) · [Try it locally](#try-it-locally) · [Integrate with NestJS](#integrate-with-nestjs) · [Reliability evidence](#reliability-evidence) · [Performance](#performance) · [Usage guide](docs/usage.md)
+[Install](#1-install-the-package) · [Try it locally](#try-it-locally) · [Integrate with NestJS](#integrate-with-nestjs) · [Reliability evidence](#reliability-evidence) · [Performance](#performance) · [Usage guide](docs/usage.md) · [Testing helpers](docs/testing.md)
 
 ## Why use Inbox?
 
@@ -69,7 +69,7 @@ npm run test:package
 This builds a tarball, installs it in a separate consumer, starts a disposable PostgreSQL database, and checks types, imports, SQL assets, deduplication, rollback, replay, and scoped administration. A successful run ends with:
 
 ```text
-Installed @nestarc/inbox 0.1.0 tarball verification passed.
+Installed @nestarc/inbox 0.2.0 tarball verification passed.
 ```
 
 The runner ignores an existing application `DATABASE_URL`, uses a random local port, and removes its container afterward. The first run may download dependencies and a database image. Docker or database failures fail the check rather than skipping it.
@@ -78,6 +78,11 @@ To explore the integrations with temporary databases and brokers:
 
 ```sh
 npm run test:examples
+npm run test:operations
+npm run test:operations:database
+# Install example dependencies once for the RabbitMQ recovery fixture:
+npm install --prefix examples --no-audit --no-fund
+npm run test:broker-recovery
 ```
 
 That runs all eight [examples](examples/README.md), including an outbox → inbox → business write → outbox chain. You can also follow the examples guide to run one integration at a time.
@@ -97,7 +102,9 @@ The implementation is checked against real databases and installed package artif
 
 Recorded checks for the local Preview.1 baseline include **85 unit tests**, **38 database/crash tests on each of PostgreSQL 16 and 18**, **41 release checks on Node 22 and 24**, and **eight runnable integrations**. GitHub-hosted [CI run 40684612217](https://github.com/nestarc/inbox/actions/runs/40684612217) passed all four Node/PostgreSQL combinations and the examples at commit `664b4fc`. Version 0.1.0 promotes that runtime implementation and schema; the promotion changes version metadata and documentation. Counts describe the recorded runs, not a guarantee of every runtime or failure scenario. [Read the test-to-contract mapping and remaining validation](docs/validation.md).
 
-A lost commit response is tested by error injection after a real commit. Actual network partitions, database failover, disk exhaustion, and sustained pool saturation remain separate operational exercises.
+The 0.2.0 follow-up adds **20 testing-helper unit checks**, **three PostgreSQL helper cases**, and actual TCP faults, pool saturation, SIGTERM, PostgreSQL standby promotion, bounded tablespace exhaustion, and RabbitMQ restart/retry/DLQ recovery checks. The [current validation record](docs/validation.md) distinguishes each tested condition from deployment-specific guarantees. Existing 0.1.0 installations keep schema v2 without a migration.
+
+A lost commit response is tested by error injection after a real commit. Separate operational tests exercise actual connection loss and blackholes, standby promotion after confirmed WAL replay, business-tablespace ENOSPC, and bounded pool pressure. Automatic failover routing, unreplicated commit loss, WAL-volume exhaustion, and application-specific soak tests remain deployment concerns.
 
 ## Performance
 
@@ -121,6 +128,8 @@ The implementation uses partial indexes for due work and expired leases, `SKIP L
 npm run benchmark
 ```
 
+For simultaneous ingress and processing on a disk-backed fixture, run `npm run benchmark:sustained`. The [sustained load report](docs/benchmarks/2026-10-28-sustained-local.md) records overload recovery, pool waiting, hot/cold tenant latency, and payload retention. It is a separate workload from the short acceptance benchmark above.
+
 ## Integrate with NestJS
 
 The following steps target an **existing NestJS 11 application with Prisma 7**, using the versions in the compatibility table above. Your application owns its Prisma client, database migrations, transport credentials, and shutdown lifecycle.
@@ -130,14 +139,14 @@ The following steps target an **existing NestJS 11 application with Prisma 7**, 
 In your application directory, install Inbox and the adapter matching your Prisma client:
 
 ```sh
-npm install @nestarc/inbox@0.1.0
+npm install @nestarc/inbox@0.2.0
 npm install @prisma/adapter-pg@7.10.1
 ```
 
 For a local source build, run `npm ci` and `npm pack` in this repository checkout. `prepack` builds the library. Install the resulting tarball in your application instead:
 
 ```sh
-npm install /absolute/path/to/inbox/nestarc-inbox-0.1.0.tgz
+npm install /absolute/path/to/inbox/nestarc-inbox-0.2.0.tgz
 ```
 
 ### 2. Apply the schema
@@ -285,11 +294,16 @@ npm run test:release
 npm run test:integration
 npm run test:package
 npm run test:examples
+npm run test:operations
+npm run test:operations:database
+# Install example dependencies once for the RabbitMQ recovery fixture:
+npm install --prefix examples --no-audit --no-fund
+npm run test:broker-recovery
 ```
 
-Database checks require Docker. Set `INBOX_TEST_POSTGRES_IMAGE=postgres:18-alpine` to select PostgreSQL 18; the fixture default is 16.
+Database checks require Docker. Set `INBOX_TEST_POSTGRES_IMAGE=postgres:18-alpine` to select PostgreSQL 18 for the general fixture; its default is 16. The dedicated `test:operations:database` primary/standby and ENOSPC suite is pinned to PostgreSQL 16.
 
-CI and releases share a Node 22/24 × PostgreSQL 16/18 validation workflow. A GitHub Release is configured to publish the exact tested tarball through npm OIDC: prereleases to `next`, release versions such as 0.1.0 to `latest`. Manual runs only validate and dry-run. [Release setup and publishing procedure](docs/releasing.md)
+CI and releases share a Node 22/24 × PostgreSQL 16/18 validation workflow. A GitHub Release is configured to publish the exact tested tarball through npm OIDC: prereleases to `next`, release versions such as 0.2.0 to `latest`. A separate Node 24/PostgreSQL 16 gate checks operational recovery. Manual runs only validate and dry-run. [Release setup and publishing procedure](docs/releasing.md)
 
 [Changelog](CHANGELOG.md) · [Full usage guide](docs/usage.md) · [Validation record](docs/validation.md) · [Architecture decision](docs/adr/0001-durable-inbox.md) · [Roadmap](docs/implementation-roadmap.md)
 

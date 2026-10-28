@@ -247,4 +247,4 @@ Preview 출시는 [구현 로드맵](implementation-roadmap.md)의 장애·원�
 
 초기 피드백에서 확인할 것은 도입 소요 시간, 대체한 애플리케이션 코드, 처리 지연, DB 부하, 운영자의 복구 가능성이다. 단순 npm 다운로드보다 실제 적용 사례를 우선한다. v1.0은 상태 전이·identity·migration·지원 버전 정책이 안정되고 장애 복구를 검증한 뒤 판단한다.
 
-후속 우선순위는 검증된 브로커 예제 추가, tenancy adapter, 테스트 helper 순이다. 별도 public reliability-core와 다중 ORM은 실제로 중복되는 계약과 사용자 수요가 확인된 뒤 결정한다.
+초기 후속 우선순위였던 브로커 예제와 tenancy adapter는 0.1.0에, [테스트 helper](testing.md)는 0.2.0에 포함했다. 실제 서비스 2곳 도입·피드백은 이번 후속 작업에서 제외했으며 아직 목표로 남는다. 별도 public reliability-core와 다중 ORM은 실제로 중복되는 계약과 사용자 수요가 확인된 뒤 결정한다.

@@ -326,11 +326,15 @@ import {
   type InboxHandler, type InboxEnvelope, type InboxContext,
   type InboxReplayOptions, type InboxReplayResult, type InboxTenancyOptions,
 } from '@nestarc/inbox';
+import { drainInbox, waitForInboxRecord, InboxTestError } from '@nestarc/inbox/testing';
 
 async function main() {
   assert.equal(typeof InboxService, 'function');
   assert.equal(typeof InboxModule.forRootAsync, 'function');
   assert.equal(typeof createInboxTenancyContext, 'function');
+  assert.equal(typeof drainInbox, 'function');
+  assert.equal(typeof InboxTestError, 'function');
+  assert.ok(require.resolve('@nestarc/inbox/testing').includes('node_modules'));
   // Optional integration must not make base imports or declarations require tenancy.
   assert.throws(() => require.resolve('@nestarc/tenancy'), { code: 'MODULE_NOT_FOUND' });
   const entry = require.resolve('@nestarc/inbox');
@@ -379,8 +383,16 @@ async function main() {
         throw new InboxPermanentError('Expected rollback');
       },
     };
+    let retryCalls = 0;
+    const retrying: InboxHandler<{ key: string }, Prisma.TransactionClient> = {
+      consumer: 'pack.retry.v1', eventType: 'pack.received', schemaVersion: 1,
+      async handle(payload, { tx }) {
+        await tx.effect.create({ data: { id: payload.key, value: 1 } });
+        if (++retryCalls === 1) throw new Error('Expected transient failure');
+      },
+    };
     inbox = new InboxService({
-      prisma, handlers: [handler, failing], worker: { enabled: false },
+      prisma, handlers: [handler, failing, retrying], worker: { enabled: false, retryBaseMs: 100, retryMaxMs: 100 },
       handlerContext: createInboxTenancyContext(tenancyOptions),
     });
     await inbox.initialize();
@@ -442,7 +454,17 @@ async function main() {
     assert.equal(requeued.status, 'PENDING');
     assert.equal(requeued.attemptCount, 1);
     assert.equal(requeued.cycleAttemptCount, 0);
-    console.log('Packed consumer: types, optional tenancy adapter, SQL exports, dedupe, replay lineage, same-tx rollback, and scoped admin passed.');
+    const retryReceipt = await inbox.accept({ ...envelope, consumer: 'pack.retry.v1', messageId: 'helper-retry', payload: { key: 'helper-retry' } });
+    await inbox.runOnce();
+    assert.equal((await admin.get(retryReceipt.id))?.status, 'RETRYABLE');
+    assert.equal(await prisma.effect.count({ where: { id: 'helper-retry' } }), 0);
+    const drained = await drainInbox(inbox, admin, [retryReceipt.id], { timeoutMs: 5000 });
+    assert.equal(drained[0]?.status, 'COMPLETED');
+    assert.equal(drained[0]?.attemptCount, 2);
+    assert.equal(retryCalls, 2);
+    assert.equal((await prisma.effect.findUniqueOrThrow({ where: { id: 'helper-retry' } })).value, 1);
+    assert.equal((await waitForInboxRecord(admin, retryReceipt.id)).id, retryReceipt.id);
+    console.log('Packed consumer: types, optional tenancy adapter, SQL exports, dedupe, replay lineage, same-tx rollback, scoped admin, and testing helpers passed.');
   } finally {
     await inbox?.close();
     await prisma.$disconnect();
@@ -462,6 +484,10 @@ assert.equal(typeof api.InboxModule.forRoot, 'function');
 assert.equal(typeof api.InboxPermanentError, 'function');
 assert.equal(typeof api.InboxReplayConflictError, 'function');
 assert.equal(typeof api.createInboxTenancyContext, 'function');
+const testing = await import('@nestarc/inbox/testing');
+assert.equal(typeof testing.drainInbox, 'function');
+assert.equal(typeof testing.waitForInboxRecord, 'function');
+assert.equal(typeof testing.InboxTestError, 'function');
 console.log('Packed consumer: dynamic ESM import passed.');
 `,
   );

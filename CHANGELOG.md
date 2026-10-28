@@ -2,7 +2,22 @@
 
 User-facing changes and upgrade actions for `@nestarc/inbox`.
 
-## Unreleased
+## 0.2.0 — 2026-10-28
+
+Adds application integration-test helpers and reproducible operational recovery checks. Runtime processing contracts and SQL schema v2 are unchanged; upgrading from 0.1.0 requires no database migration.
+
+### Testing helpers
+
+- Added `@nestarc/inbox/testing` with `drainInbox()`, `waitForInboxRecord()`, and typed `InboxTestError` diagnostics. Helpers wait through persisted retry schedules and bound database reads and worker calls with a timeout, cancellation signal, and pass limit. They use the real service and scoped admin API; they do not create databases or cancel transactions already in flight. [Testing guide](docs/testing.md)
+- Verified the subpath with unit tests, PostgreSQL integration tests, and a separately installed tarball consumer using strict TypeScript, CommonJS, and dynamic ESM.
+
+### Operational validation
+
+- Added actual TCP disconnect/blackhole, connection-pool saturation, and child-process SIGTERM recovery tests.
+- Added PostgreSQL physical standby promotion after confirmed WAL replay and real SQLSTATE `53100` in a bounded disposable tablespace, including rollback and recovery assertions. [Database operations](docs/db-operations.md)
+- Added RabbitMQ process restarts, unacknowledged redelivery, persisted retry/TTL delivery, and dead-letter routing tests. [Broker recovery](docs/broker-recovery.md)
+- Added a disk-backed sustained benchmark with simultaneous ingress and processing, pool pressure, hot/cold tenants, retry recovery, and receipt/payload storage measurements. It verifies business effects separately from receipt completion. These bounded local measurements do not establish production capacity or an SLA.
+- Added a Node 24/PostgreSQL 16 operational recovery gate to CI and release validation. Real-service adoption remains outside this release's validation scope.
 
 ### Release automation
 

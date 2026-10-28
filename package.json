@@ -1,6 +1,6 @@
 {
   "name": "@nestarc/inbox",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Transactional inbox for NestJS, Prisma and PostgreSQL with durable deduplication, fenced processing and retries.",
   "license": "MIT",
   "repository": {
@@ -15,6 +15,11 @@
       "types": "./dist/index.d.ts",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "require": "./dist/testing/index.js",
+      "default": "./dist/testing/index.js"
     },
     "./sql/create-inbox-table.sql": "./src/sql/create-inbox-table.sql",
     "./sql/migrate-v1-to-v2.sql": "./src/sql/migrate-v1-to-v2.sql"
@@ -43,12 +48,16 @@
     "test:release": "node --test test/release/*.test.mjs",
     "test:integration": "node scripts/with-test-db.mjs npm run test:integration:run",
     "test:integration:run": "vitest run test/integration test/failure",
+    "test:operations": "node scripts/with-test-db.mjs node node_modules/vitest/vitest.mjs run test/operations",
+    "test:operations:database": "node scripts/test-db-operations.mjs",
+    "test:broker-recovery": "node scripts/with-test-db.mjs node scripts/test-broker-recovery.mjs",
     "test:package": "node scripts/with-test-db.mjs node scripts/test-package.mjs",
     "test:examples": "node scripts/with-test-db.mjs node scripts/test-examples.mjs",
     "prebenchmark": "npm run build",
     "benchmark": "node scripts/with-test-db.mjs node scripts/benchmark.mjs",
-    "format": "prettier --write src test scripts .github/workflows README.md CHANGELOG.md docs/usage.md docs/releasing.md package.json tsconfig*.json vitest.config.mts",
-    "format:check": "prettier --check src test scripts .github/workflows README.md CHANGELOG.md docs/usage.md docs/releasing.md package.json tsconfig*.json vitest.config.mts",
+    "benchmark:sustained": "node scripts/with-benchmark-db.mjs",
+    "format": "prettier --write src test scripts .github/workflows README.md CHANGELOG.md docs/usage.md docs/releasing.md docs/testing.md package.json tsconfig*.json vitest.config.mts",
+    "format:check": "prettier --check src test scripts .github/workflows README.md CHANGELOG.md docs/usage.md docs/releasing.md docs/testing.md package.json tsconfig*.json vitest.config.mts",
     "prepack": "npm run build"
   },
   "peerDependencies": {

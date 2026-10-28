@@ -9,7 +9,7 @@ Use Node 22.23.4+ or 24.22.1+ for the full examples project because it includes 
 Run these commands from `examples/`:
 
 ```sh
-npm install --no-save @nestarc/inbox@0.1.0
+npm install --no-save @nestarc/inbox@0.2.0
 npm run generate
 npm run build
 ```
@@ -17,12 +17,12 @@ npm run build
 To run against a local source build instead, run `npm ci` and `npm pack` from the repository root. Then, from `examples/`, install the tarball and regenerate/build:
 
 ```sh
-npm install --no-save ../nestarc-inbox-0.1.0.tgz
+npm install --no-save ../nestarc-inbox-0.2.0.tgz
 npm run generate
 npm run build
 ```
 
-The automated test runners always install the tarball built from the checkout, so they exercise the exact candidate artifact. Prisma 7.10.1 uses the PostgreSQL driver adapter and the generated client in `src/generated/prisma`. Version 0.1.0 uses schema v2 and the runtime implementation validated under the local Preview.1 development version.
+The automated test runners always install the tarball built from the checkout, so they exercise the exact candidate artifact. Prisma 7.10.1 uses the PostgreSQL driver adapter and the generated client in `src/generated/prisma`. Version 0.2.0 retains schema v2 and the processing runtime first published in 0.1.0, and adds the optional testing-helper subpath.
 
 ## Start a dedicated database
 

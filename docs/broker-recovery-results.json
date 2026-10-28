@@ -1,0 +1,52 @@
+{
+  "checkedAt": "2026-10-28T13:15:03.229Z",
+  "packageVersion": "0.2.0",
+  "brokerImage": "rabbitmq:4-alpine",
+  "brokerVersion": "4.4.0",
+  "postgresVersion": "16.15",
+  "nodeVersion": "v24.11.1",
+  "brokerSigkillRestarts": 3,
+  "elapsedMs": 21752,
+  "results": [
+    {
+      "scenario": "SIGKILL after receipt commit before ACK",
+      "redelivered": true,
+      "receipt": "duplicate",
+      "committedEffects": 1
+    },
+    {
+      "scenario": "admission failure, confirmed retry transfer, broker SIGKILL, TTL redelivery",
+      "transportRetries": 1,
+      "committedEffects": 1
+    },
+    {
+      "scenario": "persistent admission failure exhausts transport retry budget into DLQ",
+      "acceptanceFailures": 4,
+      "transportRetries": 3,
+      "committedReceipts": 0,
+      "committedEffects": 0
+    },
+    {
+      "scenario": "invalid JSON and identity conflict reach transport DLQ",
+      "deadLetters": 2,
+      "newCommittedEffects": 0
+    },
+    {
+      "scenario": "Inbox retry ownership survives broker and service restart",
+      "transientAttempts": 2,
+      "poisonAttempts": 3,
+      "committedEffects": {
+        "transient": 1,
+        "poison": 0
+      },
+      "poisonStatus": "DEAD"
+    }
+  ],
+  "finalCounts": {
+    "PENDING": 0,
+    "PROCESSING": 0,
+    "RETRYABLE": 0,
+    "COMPLETED": 5,
+    "DEAD": 1
+  }
+}

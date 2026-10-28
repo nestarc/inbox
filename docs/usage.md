@@ -1,14 +1,14 @@
 # @nestarc/inbox usage
 
-This document describes the 0.1.0 API. Inbox durably receives messages and processes them with Prisma and PostgreSQL. The application owns authentication, broker acknowledgments, its Prisma client, and migration deployment. APIs and schema may change before 1.0; review the [changelog](../CHANGELOG.md) before upgrading.
+This document describes the 0.2.0 API. Inbox durably receives messages and processes them with Prisma and PostgreSQL. The application owns authentication, broker acknowledgments, its Prisma client, and migration deployment. APIs and schema may change before 1.0; review the [changelog](../CHANGELOG.md) before upgrading. For application integration tests, see the [bounded testing helpers](testing.md).
 
-Install with `npm install @nestarc/inbox@0.1.0`. To evaluate a source build, run `npm ci` and `npm pack` in the repository, then install the resulting `nestarc-inbox-0.1.0.tgz` in your application.
+Install with `npm install @nestarc/inbox@0.2.0`. To evaluate a source build, run `npm ci` and `npm pack` in the repository, then install the resulting `nestarc-inbox-0.2.0.tgz` in your application.
 
 ## Initialize the schema and Prisma client
 
 Apply the SQL exported as `@nestarc/inbox/sql/create-inbox-table.sql` through your application's migration process before starting Inbox. Runtime initialization checks the schema; it does not create or upgrade tables. Keep the inbox SQL tables in your migration history and do not let Prisma schema synchronization remove unmanaged tables.
 
-Version 0.1.0 requires schema version 2. If you used schema v1 in a local development build, stop those processes, apply the exported `@nestarc/inbox/sql/migrate-v1-to-v2.sql`, then start 0.1.0 workers. The transactional migration preserves receipt identity, payloads, state, attempts, and tokens and may be applied again safely. It takes a table lock, so schedule the upgrade appropriately. Fresh installs use the current creation SQL. Old workers must not be restarted against v2. Local Preview.1 builds already use schema v2; the 0.1.0 promotion adds no schema change.
+Versions 0.1.0 and 0.2.0 require schema version 2; upgrading from 0.1.0 needs no SQL migration. If you used schema v1 in a local development build, stop those processes, apply the exported `@nestarc/inbox/sql/migrate-v1-to-v2.sql`, then start 0.2.0 workers. The transactional migration preserves receipt identity, payloads, state, attempts, and tokens and may be applied again safely. It takes a table lock, so schedule the upgrade appropriately. Fresh installs use the current creation SQL. Old workers must not be restarted against v2. Local Preview.1 builds already use schema v2; the 0.1.0 promotion adds no schema change.
 
 Prisma 7 requires a driver adapter. Construct one application-owned client and pass it to Inbox:
 

@@ -36,12 +36,19 @@ const manifest = {
       default: "./dist/index.js",
     },
     "./sql/create-inbox-table.sql": "./src/sql/create-inbox-table.sql",
+    "./testing": {
+      types: "./dist/testing/index.d.ts",
+      require: "./dist/testing/index.js",
+      default: "./dist/testing/index.js",
+    },
     "./sql/migrate-v1-to-v2.sql": "./src/sql/migrate-v1-to-v2.sql",
   },
 };
 const requiredFiles = {
   "dist/index.js": '"use strict"; module.exports = {};\n',
   "dist/index.d.ts": "export {};\n",
+  "dist/testing/index.js": '"use strict"; module.exports = {};\n',
+  "dist/testing/index.d.ts": "export {};\n",
   "src/sql/create-inbox-table.sql": "-- schema version 2\n",
   "src/sql/migrate-v1-to-v2.sql": "-- explicit v1 migration\n",
   "README.md": "# Inbox test artifact\n",
@@ -350,6 +357,7 @@ describe("release artifact verification", () => {
     for (const changes of [
       { main: "docs/usage.md" },
       { types: "src/contracts/types.ts" },
+      { exports: { ...manifest.exports, "./testing": "./dist/index.js" } },
       {
         exports: {
           ...manifest.exports,
@@ -368,6 +376,8 @@ describe("release artifact verification", () => {
     for (const path of [
       "dist/index.js",
       "dist/index.d.ts",
+      "dist/testing/index.js",
+      "dist/testing/index.d.ts",
       "src/sql/create-inbox-table.sql",
       "src/sql/migrate-v1-to-v2.sql",
     ]) {
