@@ -4,9 +4,9 @@
 
 A transactional inbox for **NestJS, Prisma, and PostgreSQL**. Store an incoming event durably, acknowledge its delivery, then commit your business writes and inbox completion in one database transaction. Retries and crash recovery use the same durable record.
 
-**Preview: `0.1.0-preview.1` · npm publication pending.** You can evaluate the local package now. APIs and schema may change before 1.0; see the [changelog](CHANGELOG.md) for changes and required migration steps.
+**Version `0.1.0` · SQL schema v2.** APIs and schema may change before 1.0; review the [changelog](CHANGELOG.md) and migration steps when upgrading.
 
-[Try it locally](#try-it-locally) · [Integrate with NestJS](#integrate-with-nestjs) · [Reliability evidence](#reliability-evidence) · [Performance](#performance) · [Usage guide](docs/usage.md)
+[Install](#1-install-the-package) · [Try it locally](#try-it-locally) · [Integrate with NestJS](#integrate-with-nestjs) · [Reliability evidence](#reliability-evidence) · [Performance](#performance) · [Usage guide](docs/usage.md)
 
 ## Why use Inbox?
 
@@ -42,18 +42,18 @@ The identity is **scope + source + consumer + message ID**. Repeating that ident
 | Atomic database effects and processing completion                    | Perform every handler write through `context.tx`. Keep external network work outside this transaction.                                            |
 | Multiple workers and recoverable failures                            | Size the database pool for handler transactions, acceptance, and lease heartbeats; monitor backlog age and DEAD counts.                           |
 | Tenant-scoped processing and administration                          | Scope is part of identity. Database RLS requires application policies and a restricted role; an optional tenancy adapter helps apply the context. |
-| A package to evaluate before rollout                                 | This is a tested preview. Sustained production load, database failover, and real-service adoption remain to be validated for your deployment.     |
+| A package to evaluate before rollout                                 | This is a pre-1.0 release. Validate sustained production load, database failover, and operational recovery for your deployment.                   |
 
 ### Compatibility
 
-| Component        | Current contract and validation                                                                                           |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| NestJS           | `^11.2.8`; tested with 11.2.8                                                                                             |
-| Prisma client    | `^7.10.1`; tested with 7.10.1 and its PostgreSQL driver adapter                                                           |
-| PostgreSQL       | Integration and crash-recovery tests exercised 16 and 18                                                                  |
-| Node.js          | Package engine: `>=22.12.0`. Use **22.23.4+ or 24.22.1+** to match the full preview checks and optional tenancy examples. |
-| Modules          | CommonJS and dynamic ESM imports checked from an installed tarball                                                        |
-| Optional tenancy | `@nestarc/tenancy ^0.16.2`; not required for the core package                                                             |
+| Component        | Current contract and validation                                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| NestJS           | `^11.2.8`; tested with 11.2.8                                                                                                |
+| Prisma client    | `^7.10.1`; tested with 7.10.1 and its PostgreSQL driver adapter                                                              |
+| PostgreSQL       | Integration and crash-recovery tests exercised 16 and 18                                                                     |
+| Node.js          | Package engine: `>=22.12.0`. Use **22.23.4+ or 24.22.1+** to match the full validation checks and optional tenancy examples. |
+| Modules          | CommonJS and dynamic ESM imports checked from an installed tarball                                                           |
+| Optional tenancy | `@nestarc/tenancy ^0.16.2`; not required for the core package                                                                |
 
 The package also declares Nest core, `reflect-metadata`, and `rxjs` peers. See [package.json](package.json) for exact ranges and [validation results](docs/validation.md) for the combinations actually exercised.
 
@@ -69,7 +69,7 @@ npm run test:package
 This builds a tarball, installs it in a separate consumer, starts a disposable PostgreSQL database, and checks types, imports, SQL assets, deduplication, rollback, replay, and scoped administration. A successful run ends with:
 
 ```text
-Installed @nestarc/inbox 0.1.0-preview.1 tarball verification passed.
+Installed @nestarc/inbox 0.1.0 tarball verification passed.
 ```
 
 The runner ignores an existing application `DATABASE_URL`, uses a random local port, and removes its container afterward. The first run may download dependencies and a database image. Docker or database failures fail the check rather than skipping it.
@@ -84,7 +84,7 @@ That runs all eight [examples](examples/README.md), including an outbox → inbo
 
 ## Reliability evidence
 
-The preview is checked against real databases and installed package artifacts, alongside unit tests.
+The implementation is checked against real databases and installed package artifacts, alongside unit tests.
 
 | Failure or integration boundary | Evidence                                                                                                                                                          |
 | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -95,13 +95,13 @@ The preview is checked against real databases and installed package artifacts, a
 | Replay and tenancy              | Concurrent replay requests, v1→v2 migration, restricted-role RLS, cross-tenant rejection, and connection context cleanup are checked.                             |
 | Package installation            | Separate consumers verify generated Prisma types, CommonJS/ESM imports, SQL exports, and core use without the optional tenancy package.                           |
 
-Recorded checks for Preview.1 include **85 unit tests**, **38 database/crash tests on each of PostgreSQL 16 and 18**, **41 release checks on Node 22 and 24**, and **eight runnable integrations**. Counts describe the recorded runs, not a guarantee of every runtime or failure scenario. [Read the test-to-contract mapping and remaining validation](docs/validation.md).
+Recorded checks for the local Preview.1 baseline include **85 unit tests**, **38 database/crash tests on each of PostgreSQL 16 and 18**, **41 release checks on Node 22 and 24**, and **eight runnable integrations**. GitHub-hosted [CI run 40684612217](https://github.com/nestarc/inbox/actions/runs/40684612217) passed all four Node/PostgreSQL combinations and the examples at commit `664b4fc`. Version 0.1.0 promotes that runtime implementation and schema; the promotion changes version metadata and documentation. Counts describe the recorded runs, not a guarantee of every runtime or failure scenario. [Read the test-to-contract mapping and remaining validation](docs/validation.md).
 
 A lost commit response is tested by error injection after a real commit. Actual network partitions, database failover, disk exhaustion, and sustained pool saturation remain separate operational exercises.
 
 ## Performance
 
-**1,400–2,468 `accept()` calls/second across three local runs**, with the expected business-effect counts and zero observed acceptance or worker errors. These are measurements of **Preview.1 / schema v2**, taken on 28 October 2026.
+**1,400–2,468 `accept()` calls/second across three local runs**, with the expected business-effect counts and zero observed acceptance or worker errors. These are measurements of **Preview.1 / schema v2**, taken on 28 October 2026. Version 0.1.0 uses the same runtime implementation and schema; the recorded benchmark version remains Preview.1.
 
 | Scenario                                 | Receive calls/second |   Receive p95 |
 | ---------------------------------------- | -------------------: | ------------: |
@@ -125,19 +125,19 @@ npm run benchmark
 
 The following steps target an **existing NestJS 11 application with Prisma 7**, using the versions in the compatibility table above. Your application owns its Prisma client, database migrations, transport credentials, and shutdown lifecycle.
 
-### 1. Install the preview
+### 1. Install the package
 
-Until npm publication, create the package in this checkout:
+In your application directory, install Inbox and the adapter matching your Prisma client:
 
 ```sh
-npm pack
+npm install @nestarc/inbox@0.1.0
+npm install @prisma/adapter-pg@7.10.1
 ```
 
-`prepack` builds the library. In your application directory, install that tarball and the adapter matching your Prisma client:
+For a local source build, run `npm ci` and `npm pack` in this repository checkout. `prepack` builds the library. Install the resulting tarball in your application instead:
 
 ```sh
-npm install /absolute/path/to/inbox/nestarc-inbox-0.1.0-preview.1.tgz
-npm install @prisma/adapter-pg@7.10.1
+npm install /absolute/path/to/inbox/nestarc-inbox-0.1.0.tgz
 ```
 
 ### 2. Apply the schema
@@ -164,7 +164,7 @@ model OrderProjection {
 
 The composite key also protects the application's business identity if different event IDs refer to the same order. Such a conflict is a handler failure to resolve, not a silently successful Inbox duplicate.
 
-**Already using schema v1?** Follow the [Preview.1 migration steps](CHANGELOG.md#upgrade-action-schema-version-2) instead of applying the fresh-install SQL.
+**Already using schema v1 from a local development build?** Follow the [schema v2 migration steps](CHANGELOG.md#upgrade-action-schema-version-2) instead of applying the fresh-install SQL.
 
 ### 3. Register a handler and ingress service
 
@@ -289,7 +289,7 @@ npm run test:examples
 
 Database checks require Docker. Set `INBOX_TEST_POSTGRES_IMAGE=postgres:18-alpine` to select PostgreSQL 18; the fixture default is 16.
 
-CI and releases share a Node 22/24 × PostgreSQL 16/18 validation workflow. A GitHub Release is configured to publish the exact tested tarball through npm OIDC: previews to `next`, stable versions to `latest`. Manual runs only validate and dry-run. The initial npm registration and Trusted Publisher connection are still required. [Release setup](docs/releasing.md)
+CI and releases share a Node 22/24 × PostgreSQL 16/18 validation workflow. A GitHub Release is configured to publish the exact tested tarball through npm OIDC: prereleases to `next`, release versions such as 0.1.0 to `latest`. Manual runs only validate and dry-run. [Release setup and publishing procedure](docs/releasing.md)
 
 [Changelog](CHANGELOG.md) · [Full usage guide](docs/usage.md) · [Validation record](docs/validation.md) · [Architecture decision](docs/adr/0001-durable-inbox.md) · [Roadmap](docs/implementation-roadmap.md)
 

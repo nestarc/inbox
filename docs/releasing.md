@@ -1,6 +1,6 @@
 # GitHub Release에서 npm 배포
 
-`release.yml`은 GitHub Release의 **Publish release** 이벤트로 실행된다. `package.json` 버전이 `0.1.0-preview.1`이면 태그는 `v0.1.0-preview.1`, GitHub의 **Set as a pre-release**는 켜져 있어야 한다. 태그만 push하거나 초안을 저장하면 배포하지 않는다.
+`release.yml`은 GitHub Release의 **Publish release** 이벤트로 실행된다. `package.json` 버전이 `0.1.0`이면 태그는 `v0.1.0`, GitHub의 **Set as a pre-release**는 꺼져 있어야 한다. `-preview.1` 같은 prerelease 버전을 사용할 때만 이 옵션을 켠다. 태그만 push하거나 초안을 저장하면 배포하지 않는다.
 
 인증 방식은 다른 nestarc 패키지와 동일한 **npm Trusted Publishing(GitHub OIDC)** 이다. `NPM_TOKEN`이나 `NODE_AUTH_TOKEN` secret을 추가하지 않는다. 배포 job만 `npm` GitHub Environment와 `id-token: write`를 사용하며, 빌드와 테스트 job은 저장소 읽기 권한만 가진다.
 
@@ -8,7 +8,7 @@
 
 1. 이 구현과 lockfile을 `nestarc/inbox`의 `main`에 반영한다.
 2. GitHub 저장소 **Settings → Environments → npm**을 준비한다. Deployment branches and tags는 Selected branches and tags로 설정하고 tag 패턴 `v*.*.*`를 허용한다. 팀 정책에 따라 reviewer를 추가할 수 있다.
-3. npm에 `@nestarc/inbox`가 아직 없으면 권한 있는 관리자가 최초 버전을 등록한다. npm의 Trusted Publisher 설정은 이미 존재하는 패키지가 필요하다. 최초 등록에도 아래 검증한 tarball을 사용하고, preview는 반드시 `--tag next`로 게시한다. 이 작업은 계정 로그인·2FA가 필요한 일회성 절차이며 워크플로우에 장기 토큰을 넣는 대체 경로는 없다.
+3. npm에 `@nestarc/inbox`가 아직 없으면 권한 있는 관리자가 최초 버전을 등록한다. npm의 Trusted Publisher 설정은 이미 존재하는 패키지가 필요하다. 최초 등록에도 아래 검증한 tarball을 사용하고, `0.1.0`은 `--tag latest`, preview는 `--tag next`로 게시한다. 이 작업은 계정 로그인·2FA가 필요한 일회성 절차이며 워크플로우에 장기 토큰을 넣는 대체 경로는 없다.
 4. npm 패키지 **Settings → Trusted Publisher → GitHub Actions**를 아래 값으로 연결한다. 현재 npm 설정에서 **Allow this trusted publisher to publish packages**를 활성화한다. stage만 허용된 설정으로는 이 워크플로우의 직접 publish가 성공하지 않는다.
 
 | 항목                 | 값            |
@@ -45,7 +45,7 @@ npm trust github @nestarc/inbox \
 | `0.1.0-rc.1`      | 켬                | `next`       |
 | `0.1.0`           | 끔                | `latest`     |
 
-배포 명령은 dist-tag를 명시하므로 preview용 `publishConfig.tag: next`가 향후 안정 버전의 `latest` 배포를 막지 않는다. 태그·버전·prerelease 표시가 불일치하거나 태그 커밋이 `main` 이력에 없으면 테스트와 게시 전에 거절한다. 빌드 메타데이터가 있는 버전(`1.0.0+build`)은 받지 않는다.
+현재 `publishConfig.tag`는 `latest`이며, 배포 명령은 버전에 따라 `latest` 또는 `next`를 명시해 기본 설정을 덮어쓴다. 태그·버전·prerelease 표시가 불일치하거나 태그 커밋이 `main` 이력에 없으면 테스트와 게시 전에 거절한다. 빌드 메타데이터가 있는 버전(`1.0.0+build`)은 받지 않는다.
 
 ## 검증과 배포물
 
@@ -77,7 +77,7 @@ export INBOX_RELEASE_METADATA="$INBOX_CANDIDATE_DIR/metadata.json"
 npm run test:package
 npm run test:examples
 node scripts/release-artifact.mjs verify "$INBOX_RELEASE_TARBALL" "$INBOX_RELEASE_METADATA"
-npm publish "$INBOX_RELEASE_TARBALL" --ignore-scripts --access public --tag next --dry-run
+npm publish "$INBOX_RELEASE_TARBALL" --ignore-scripts --access public --tag latest --dry-run
 ```
 
 `INBOX_RELEASE_TARBALL`과 `INBOX_RELEASE_METADATA`는 둘 다 절대 경로로 지정한다. 두 변수를 생략한 일반 `test:package` / `test:examples` 실행은 기존처럼 로컬에서 빌드와 pack을 수행한다.

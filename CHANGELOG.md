@@ -2,27 +2,27 @@
 
 User-facing changes and upgrade actions for `@nestarc/inbox`.
 
-## Unreleased (0.1.0-preview.1)
+## 0.1.0 — 2026-10-28
 
-This is a local preview candidate; no npm release has been published. The entry includes the initial inbox implementation and additions since the local `0.1.0-preview.0` development baseline.
+First public release version. It promotes the runtime implementation and schema verified as `0.1.0-preview.1`, with version metadata and documentation updates. Preview.0 and Preview.1 were local development baselines, not published releases. APIs and schema may change before 1.0.
 
 ### Upgrade action: schema version 2
 
-Existing schema v1 installations must migrate before running this candidate:
+Existing schema v1 installations from local development builds must migrate before running 0.1.0:
 
 1. Stop processes using the schema v1 implementation.
 2. Apply [`@nestarc/inbox/sql/migrate-v1-to-v2.sql`](src/sql/migrate-v1-to-v2.sql) through the application's migration process. It takes an exclusive table lock and preserves existing receipts, fingerprints, processing state, attempts, and claim tokens.
-3. Deploy Preview.1 and keep schema v1 workers stopped. Runtime schema checks reject incompatible versions; Inbox does not run migrations automatically.
+3. Deploy 0.1.0 and keep schema v1 workers stopped. Runtime schema checks reject incompatible versions; Inbox does not run migrations automatically.
 
 Fresh installations use [`@nestarc/inbox/sql/create-inbox-table.sql`](src/sql/create-inbox-table.sql). See the [schema setup and upgrade guide](docs/usage.md#initialize-the-schema-and-prisma-client).
 
-### Initial preview foundation
+### Core processing
 
 - Durable `accept()` with stable message identity, canonical payload fingerprints, duplicate receipts, and explicit identity/content conflicts. Acknowledge transport delivery after acceptance commits.
 - PostgreSQL workers with atomic claims, renewable leases, fenced completion, persisted retries, and DEAD records. Business writes through `context.tx`, optional outbox writes, and inbox completion commit together.
 - Tenant/global administration for status, backlog statistics, version-checked DEAD requeue, and completed-payload cleanup that preserves deduplication history.
 
-### Added since the local Preview.0 baseline
+### Replay and integrations
 
 - **Completed-message replay:** The scoped admin's `replay()` method, accessed through `forTenant(id)` or `forGlobal()`, creates a separate receipt while preserving the original completion and deduplication identity. A persisted operator request UUID makes retries idempotent; records and handler context include replay lineage. New replay requests require a retained payload and the expected source version. Replay deliberately permits another business execution. [Replay contract](docs/usage.md#explicit-replay-of-a-completed-message)
 - **Optional tenancy integration:** `createInboxTenancyContext()` carries `@nestarc/tenancy` context into the existing handler transaction and sets the canonical PostgreSQL tenant setting. Global messages are rejected by default; explicit shared-table processing does not bypass RLS. Applications provision their own policies and restricted roles. [Integration guide](docs/usage.md#tenant-context-in-the-handler-transaction)
@@ -38,12 +38,14 @@ Fresh installations use [`@nestarc/inbox/sql/create-inbox-table.sql`](src/sql/cr
 ### Release workflow
 
 - Added shared CI/release validation for Node 22/24 and PostgreSQL 16/18. The workflow builds one tarball, checks that same artifact in independent consumers and runnable examples, and verifies its integrity before publication.
-- GitHub Release publication is configured to use npm Trusted Publishing with provenance. Preview versions target `next` and stable versions target `latest`; manual workflow runs validate and perform a publication dry run without publishing. Initial npm registration and Trusted Publisher setup are still required. [Release setup](docs/releasing.md)
+- GitHub Release publication is configured to use npm Trusted Publishing with provenance. Prereleases target `next` and release versions such as 0.1.0 target `latest`; manual workflow runs validate and perform a publication dry run without publishing. [Release setup and publishing procedure](docs/releasing.md)
 
 ### Validation status
 
-Local unit, database, process-crash, packed-consumer, and eight-example checks passed; exact versions and remaining operational tests are recorded in [validation results](docs/validation.md). Kafka examples were exercised with Redpanda and SQS examples with ElasticMQ. These checks do not establish production AWS SQS coverage, hosted CI success, or a completed npm publication.
+Local unit, database, process-crash, packed-consumer, and eight-example checks passed for the Preview.1 baseline. GitHub-hosted [CI run 40684612217](https://github.com/nestarc/inbox/actions/runs/40684612217), at commit `664b4fc`, also passed all four Node 22/24 × PostgreSQL 16/18 combinations and the examples. These results cover the runtime promoted to 0.1.0; they are not evidence of a later tag's CI run or successful npm OIDC authentication. Exact versions and remaining operational tests are recorded in [validation results](docs/validation.md).
 
-Added [three local Preview.1 benchmark runs](docs/benchmarks/2026-10-28-preview1-local.md) with raw JSON reports. All nine scenarios verified the expected committed effects and zero observed acceptance or worker errors. The measurements separate receipt acceptance from worker draining and record environment and sample variation; they are not a controlled speedup comparison or a production capacity estimate.
+Kafka examples were exercised with Redpanda and SQS examples with ElasticMQ; production AWS SQS behavior still requires deployment-specific validation.
+
+Included [three local Preview.1 benchmark reports](docs/benchmarks/2026-10-28-preview1-local.md) with raw JSON. All nine scenarios verified the expected committed effects and zero observed acceptance or worker errors. Their recorded package version remains `0.1.0-preview.1`; promotion to 0.1.0 changes no runtime code or schema. The measurements separate receipt acceptance from worker draining and record environment and sample variation; they are not a controlled speedup comparison or a production capacity estimate.
 
 Handler calls may repeat; the atomicity guarantee applies to writes in the supplied database transaction while the receipt is retained.

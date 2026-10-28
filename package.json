@@ -1,6 +1,6 @@
 {
   "name": "@nestarc/inbox",
-  "version": "0.1.0-preview.1",
+  "version": "0.1.0",
   "description": "Transactional inbox for NestJS, Prisma and PostgreSQL with durable deduplication, fenced processing and retries.",
   "license": "MIT",
   "repository": {
@@ -79,7 +79,7 @@
   },
   "publishConfig": {
     "access": "public",
-    "tag": "next"
+    "tag": "latest"
   },
   "peerDependenciesMeta": {
     "@nestarc/tenancy": {

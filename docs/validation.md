@@ -1,5 +1,11 @@
 # @nestarc/inbox MVP 검증 기록
 
+## GitHub hosted CI 검증 — 2026년 10월 28일
+
+커밋 `664b4fc`의 [CI 실행 40684612217](https://github.com/nestarc/inbox/actions/runs/40684612217)이 전체 성공했다. GitHub hosted Linux runner에서 Node 22/24 × PostgreSQL 16/18 네 조합의 단위·통합/복구·동일 tarball 소비자 검증을 통과했고, Node 24/PostgreSQL 16에서 브로커를 포함한 예제 8종도 통과했다. 빌드·타입·포맷·릴리즈 검증과 artifact 무결성 확인도 성공했다.
+
+이 기록은 Preview.1 당시 커밋에 대한 실제 원격 결과다. 아래에서 hosted CI를 미확인으로 적은 문장은 이 실행 전 작성된 이력이며, npm 게시·OIDC 인증 성공과는 별개의 검증이다. 0.1.0은 이 런타임과 schema v2를 유지하고 버전 metadata와 문서를 갱신한 첫 공개 릴리즈다.
+
 ## README 온보딩과 성능 기록 검증 — 2026년 10월 28일
 
 README의 Prisma model과 TypeScript 모듈 코드 블록을 수정 없이 추출해 별도 앱에서 검증했다. Node 24.22.1, NestJS 11.2.8, Prisma 7.10.1, TypeScript 5.9.3과 임시 PostgreSQL 16.15를 사용했다. `prisma-client` generator의 CommonJS client 생성과 strict TypeScript 컴파일을 통과했고, 실제 Nest application context에서 같은 ID를 두 번 수신해 `accepted` → `duplicate`, 동일 receipt, `COMPLETED`, 업무 projection 1건을 확인했다. 선택적 tenancy 패키지 없이 동작했고 앱·Prisma client·DB 연결을 순서대로 종료했다. 검증용 DB 컨테이너도 정리했다.

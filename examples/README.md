@@ -4,24 +4,25 @@ These examples import the installed `@nestarc/inbox` package and use a real Post
 
 Use Node 22.23.4+ or 24.22.1+ for the full examples project because it includes `@nestarc/tenancy` 0.16.2. The package's full `npm run test:examples` command builds a tarball, installs these examples in an isolated directory, and executes every example against temporary fixtures.
 
-## Install the candidate package
+## Install the package
 
-Build and pack the library from the repository root:
-
-```sh
-npm run build
-npm pack
-```
-
-Then run these commands from `examples/`, replacing the tarball path when necessary:
+Run these commands from `examples/`:
 
 ```sh
-npm install --no-save ../nestarc-inbox-0.1.0-preview.1.tgz
+npm install --no-save @nestarc/inbox@0.1.0
 npm run generate
 npm run build
 ```
 
-The inbox dependency is installed from that tarball, rather than fetched as an unpublished registry version. Prisma 7.10.1 uses the PostgreSQL driver adapter and the generated client in `src/generated/prisma`.
+To run against a local source build instead, run `npm ci` and `npm pack` from the repository root. Then, from `examples/`, install the tarball and regenerate/build:
+
+```sh
+npm install --no-save ../nestarc-inbox-0.1.0.tgz
+npm run generate
+npm run build
+```
+
+The automated test runners always install the tarball built from the checkout, so they exercise the exact candidate artifact. Prisma 7.10.1 uses the PostgreSQL driver adapter and the generated client in `src/generated/prisma`. Version 0.1.0 uses schema v2 and the runtime implementation validated under the local Preview.1 development version.
 
 ## Start a dedicated database
 
@@ -91,7 +92,7 @@ The examples close the Nest application before disconnecting the application-own
 The repository runner supplies isolated Redpanda (Kafka protocol), Redis, and ElasticMQ (SQS protocol) containers, bound to loopback ports:
 
 ```sh
-# After installing the candidate tarball in examples/, run from the repository root:
+# After installing Inbox in examples/, run from the repository root:
 node examples/scripts/with-brokers.cjs
 ```
 
@@ -113,7 +114,7 @@ The individual commands use `INBOX_EXAMPLE_KAFKA_BROKER`, `INBOX_EXAMPLE_SQS_END
 
 ## Automated fixture smoke checks
 
-After installing the candidate tarball in `examples/`, run from the repository root:
+After installing Inbox in `examples/`, run from the repository root:
 
 ```sh
 node scripts/with-test-db.mjs node examples/scripts/smoke.cjs

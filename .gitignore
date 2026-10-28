@@ -147,3 +147,21 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Operating-system metadata
+.DS_Store
+._*
+[Tt]humbs.db
+[Dd]esktop.ini
+
+# Personal editor state and backups; shared editor settings remain trackable
+**/.idea/workspace.xml
+**/.idea/tasks.xml
+**/.idea/shelf/
+.history/
+*.swp
+*.swo
+*~
+
+# Local npm configuration may contain registry authentication tokens
+.npmrc
