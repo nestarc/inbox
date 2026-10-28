@@ -337,10 +337,14 @@ export function verifyReleaseRef() {
   return version;
 }
 
-export async function registryStatus(metadata, fetcher = fetch) {
+export async function registryStatus(
+  metadata,
+  fetcher = fetch,
+  timeoutMs = 15000,
+) {
   const response = await fetcher(
     `https://registry.npmjs.org/${encodeURIComponent(metadata.name)}/${encodeURIComponent(metadata.version)}`,
-    { signal: AbortSignal.timeout(15000) },
+    { signal: AbortSignal.timeout(timeoutMs) },
   );
   if (response.status === 404) return "publish";
   assert.ok(
@@ -356,6 +360,41 @@ export async function registryStatus(metadata, fetcher = fetch) {
     "Version already exists with different bytes",
   );
   return "skip";
+}
+
+export async function waitForPublished(
+  metadata,
+  {
+    fetcher = fetch,
+    sleep = setTimeout,
+    now = () => performance.now(),
+    timeoutMs = 20 * 60 * 1000,
+    pollIntervalMs = 30000,
+    onPending = () => {},
+  } = {},
+) {
+  assert.ok(Number.isSafeInteger(timeoutMs) && timeoutMs > 0);
+  assert.ok(Number.isSafeInteger(pollIntervalMs) && pollIntervalMs > 0);
+  const startedAt = now();
+  const deadline = startedAt + timeoutMs;
+  while (now() < deadline) {
+    // A final registry request must fit inside the remaining availability window.
+    const requestTimeoutMs = Math.max(
+      1,
+      Math.ceil(Math.min(15000, deadline - now())),
+    );
+    if ((await registryStatus(metadata, fetcher, requestTimeoutMs)) === "skip")
+      return;
+    const elapsedMs = now() - startedAt;
+    const waitMs = Math.min(pollIntervalMs, deadline - now());
+    if (waitMs <= 0) break;
+    onPending({ elapsedMs, waitMs, timeoutMs });
+    await sleep(waitMs);
+  }
+  throw new Error(
+    `Published version did not appear within ${timeoutMs / 60000} minutes. ` +
+      "npm may still be scanning or reviewing it. Retry verify-published with the same artifact; do not publish again.",
+  );
 }
 
 async function main() {
@@ -379,14 +418,15 @@ async function main() {
     return console.log(`Registry decision: ${status}`);
   }
   assert.equal(action, "verify-published", "Unknown release command");
-  for (let attempt = 0; attempt < 8; attempt++) {
-    if ((await registryStatus(metadata)) === "skip")
-      return console.log(
-        "Published registry integrity matches the tested tarball",
-      );
-    await setTimeout(2000);
-  }
-  throw new Error("Published version did not appear in the registry");
+  await waitForPublished(metadata, {
+    onPending: ({ elapsedMs, waitMs, timeoutMs }) =>
+      console.log(
+        `Published version is not available yet; npm scanning may be pending. ` +
+          `Checking again in ${Math.ceil(waitMs / 1000)}s ` +
+          `(${Math.floor(elapsedMs / 1000)}s elapsed, ${timeoutMs / 60000} minute limit).`,
+      ),
+  });
+  console.log("Published registry integrity matches the tested tarball");
 }
 
 if (

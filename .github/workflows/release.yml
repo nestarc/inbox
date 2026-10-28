@@ -71,7 +71,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published' && github.repository == 'nestarc/inbox'
     needs: [verify, validation]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     environment: npm
     permissions:
       contents: read

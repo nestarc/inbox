@@ -1,5 +1,15 @@
 # @nestarc/inbox MVP 검증 기록
 
+## 0.1.0 최초 npm 게시 — 2026년 10월 28일
+
+커밋 `15b01813f009bb012f88a081bdd4a7705befc90e`의 [CI 실행 40686580892](https://github.com/nestarc/inbox/actions/runs/40686580892)이 전체 성공했다. Node 22/24 × PostgreSQL 16/18 네 조합과 예제 8종이 검증한 동일 tarball을 대화형 2FA 인증으로 최초 게시했다. npm의 검사 대기 후 공개 레지스트리의 `@nestarc/inbox@0.1.0`과 `latest: 0.1.0`을 확인했고, 실제 내려받은 tarball의 SHA-512가 CI 산출물과 일치했다. 배포물은 87개 파일, 105,710바이트이며 SHA-256은 `9bd1b4292cb62a72fdff0d1b7fc4cf01a5f7a4967003022b28dd0f4d6f192c62`다.
+
+[GitHub Release v0.1.0](https://github.com/nestarc/inbox/releases/tag/v0.1.0)은 같은 커밋을 가리킨다. npm Trusted Publisher는 `nestarc/inbox`, `release.yml`, environment `npm`, 직접 publish 허용으로 등록했다. 최초 수동 게시에는 GitHub OIDC provenance가 없다. 등록 성공과 실제 OIDC 게시 성공은 별개이며, 동일 버전의 무결성 확인·게시 건너뛰기로는 OIDC 인증을 검증할 수 없다. 새 연결은 [npm의 활성화 기한](https://docs.npmjs.com/trusted-publishers/)인 2일 안에 첫 게시를 성공시켜야 하며, 다음 새 버전으로 검증해야 한다.
+
+게시 직후 HTTP 202 성공 응답 뒤 공개 조회가 잠시 404를 반환하는 상황을 관찰했다. 이후 배포 도구의 확인 대기를 16초에서 최대 20분으로 보완하고, 가상 시간으로 지연 공개·시간 초과·내용 불일치·조회 오류를 검사하는 테스트 5개를 추가했다. 릴리즈 테스트는 총 46개 통과했고 actionlint와 포맷 검사도 통과했다. 이 자동화 보완은 이미 게시한 0.1.0 tarball에 소급 반영하지 않는다.
+
+아래 기록의 최초 게시·연결 미완료 표시는 각 검사 당시 상태를 보존한 이력이다.
+
 ## GitHub hosted CI 검증 — 2026년 10월 28일
 
 커밋 `664b4fc`의 [CI 실행 40684612217](https://github.com/nestarc/inbox/actions/runs/40684612217)이 전체 성공했다. GitHub hosted Linux runner에서 Node 22/24 × PostgreSQL 16/18 네 조합의 단위·통합/복구·동일 tarball 소비자 검증을 통과했고, Node 24/PostgreSQL 16에서 브로커를 포함한 예제 8종도 통과했다. 빌드·타입·포맷·릴리즈 검증과 artifact 무결성 확인도 성공했다.

@@ -55,6 +55,14 @@ Node 22/24 × PostgreSQL 16/18의 네 job이 같은 tarball을 내려받아 실�
 
 네 조합이 모두 성공해야 배포 job이 실행된다. 배포 job에서는 의존성 설치·빌드·재패킹을 하지 않고 해당 tarball을 `--ignore-scripts --provenance`로 게시한다. 게시 후 레지스트리의 integrity가 검증한 tarball과 같은지 확인한다.
 
+npm은 게시 요청을 받은 뒤 설치 가능 상태가 되기 전에 패키지를 검사한다. 공식 [게시 시점 검사 안내](https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata/)에 따르면 보통 약 5분, 혼잡하거나 추가 검토가 필요하면 15분 이상 걸릴 수 있다. 게시 성공 직후의 404만으로 실패나 미게시를 판단하지 않는다. 워크플로우는 30초 간격으로 진행 상황을 출력하며 최대 20분 동안 공개 여부와 integrity를 확인하고, 배포 job에는 총 30분을 허용한다. 내용 불일치와 404 이외의 조회 오류는 즉시 실패한다.
+
+확인 시간이 초과되어도 같은 버전을 다시 게시하거나 전체 publish job을 바로 재실행하지 않는다. npm의 검사 상태·알림을 확인하고, 원래 검증한 `package.tgz`와 `metadata.json`을 보존한 채 확인 명령만 다시 실행한다. 검사에 더 오래 걸리거나 수동 검토가 필요한 경우 이 제한 안에 공개되지 않을 수 있다.
+
+```sh
+node scripts/release-artifact.mjs verify-published "$INBOX_RELEASE_TARBALL" "$INBOX_RELEASE_METADATA"
+```
+
 같은 버전이 이미 존재하면 bytes가 같은 경우만 게시를 건너뛴다. 다른 bytes이거나 레지스트리 조회가 404 이외의 오류이면 실패한다. 기존 버전을 덮어쓰지 말고 원인을 확인한 다음 새 버전을 사용한다. 같은 버전의 재실행은 기존 dist-tag를 이동시키지 않는다.
 
 ## 로컬 재현

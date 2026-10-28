@@ -2,6 +2,12 @@
 
 User-facing changes and upgrade actions for `@nestarc/inbox`.
 
+## Unreleased
+
+### Release automation
+
+- Wait up to 20 minutes for npm's post-publication scanning before verifying registry integrity. Pending 404 responses are retried every 30 seconds; integrity mismatches and other lookup failures still stop immediately. This prevents successful uploads from being reported as failed after only 16 seconds. No runtime API or schema changes.
+
 ## 0.1.0 — 2026-10-28
 
 First public release version. It promotes the runtime implementation and schema verified as `0.1.0-preview.1`, with version metadata and documentation updates. Preview.0 and Preview.1 were local development baselines, not published releases. APIs and schema may change before 1.0.
