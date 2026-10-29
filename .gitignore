@@ -165,3 +165,6 @@ vite.config.ts.timestamp-*
 
 # Local npm configuration may contain registry authentication tokens
 .npmrc
+
+# Local documentation
+/docs/

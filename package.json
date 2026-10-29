@@ -30,7 +30,6 @@
     "README.md",
     "CHANGELOG.md",
     "LICENSE",
-    "docs",
     "examples",
     "!examples/node_modules",
     "!examples/dist",
@@ -56,8 +55,8 @@
     "prebenchmark": "npm run build",
     "benchmark": "node scripts/with-test-db.mjs node scripts/benchmark.mjs",
     "benchmark:sustained": "node scripts/with-benchmark-db.mjs",
-    "format": "prettier --write src test scripts .github/workflows README.md CHANGELOG.md docs/usage.md docs/releasing.md docs/testing.md package.json tsconfig*.json vitest.config.mts",
-    "format:check": "prettier --check src test scripts .github/workflows README.md CHANGELOG.md docs/usage.md docs/releasing.md docs/testing.md package.json tsconfig*.json vitest.config.mts",
+    "format": "prettier --write src test scripts .github/workflows README.md CHANGELOG.md package.json tsconfig*.json vitest.config.mts",
+    "format:check": "prettier --check src test scripts .github/workflows README.md CHANGELOG.md package.json tsconfig*.json vitest.config.mts",
     "prepack": "npm run build"
   },
   "peerDependencies": {

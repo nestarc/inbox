@@ -6,7 +6,7 @@ A transactional inbox for **NestJS, Prisma, and PostgreSQL**. Store an incoming 
 
 **Version `0.2.0` · SQL schema v2.** APIs and schema may change before 1.0; review the [changelog](CHANGELOG.md) and migration steps when upgrading.
 
-[Install](#1-install-the-package) · [Try it locally](#try-it-locally) · [Integrate with NestJS](#integrate-with-nestjs) · [Reliability evidence](#reliability-evidence) · [Performance](#performance) · [Usage guide](docs/usage.md) · [Testing helpers](docs/testing.md)
+[Install](#1-install-the-package) · [Try it locally](#try-it-locally) · [Integrate with NestJS](#integrate-with-nestjs) · [Reliability evidence](#reliability-evidence) · [Performance](#performance) · [Usage guide](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/usage.md) · [Testing helpers](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/testing.md)
 
 ## Why use Inbox?
 
@@ -55,7 +55,7 @@ The identity is **scope + source + consumer + message ID**. Repeating that ident
 | Modules          | CommonJS and dynamic ESM imports checked from an installed tarball                                                           |
 | Optional tenancy | `@nestarc/tenancy ^0.16.2`; not required for the core package                                                                |
 
-The package also declares Nest core, `reflect-metadata`, and `rxjs` peers. See [package.json](package.json) for exact ranges and [validation results](docs/validation.md) for the combinations actually exercised.
+The package also declares Nest core, `reflect-metadata`, and `rxjs` peers. See [package.json](package.json) for exact ranges and [validation results](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/validation.md) for the combinations actually exercised.
 
 ## Try it locally
 
@@ -100,9 +100,9 @@ The implementation is checked against real databases and installed package artif
 | Replay and tenancy              | Concurrent replay requests, v1→v2 migration, restricted-role RLS, cross-tenant rejection, and connection context cleanup are checked.                             |
 | Package installation            | Separate consumers verify generated Prisma types, CommonJS/ESM imports, SQL exports, and core use without the optional tenancy package.                           |
 
-Recorded checks for the local Preview.1 baseline include **85 unit tests**, **38 database/crash tests on each of PostgreSQL 16 and 18**, **41 release checks on Node 22 and 24**, and **eight runnable integrations**. GitHub-hosted [CI run 40684612217](https://github.com/nestarc/inbox/actions/runs/40684612217) passed all four Node/PostgreSQL combinations and the examples at commit `664b4fc`. Version 0.1.0 promotes that runtime implementation and schema; the promotion changes version metadata and documentation. Counts describe the recorded runs, not a guarantee of every runtime or failure scenario. [Read the test-to-contract mapping and remaining validation](docs/validation.md).
+Recorded checks for the local Preview.1 baseline include **85 unit tests**, **38 database/crash tests on each of PostgreSQL 16 and 18**, **41 release checks on Node 22 and 24**, and **eight runnable integrations**. GitHub-hosted [CI run 40684612217](https://github.com/nestarc/inbox/actions/runs/40684612217) passed all four Node/PostgreSQL combinations and the examples at commit `664b4fc`. Version 0.1.0 promotes that runtime implementation and schema; the promotion changes version metadata and documentation. Counts describe the recorded runs, not a guarantee of every runtime or failure scenario. [Read the test-to-contract mapping and remaining validation](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/validation.md).
 
-The 0.2.0 follow-up adds **20 testing-helper unit checks**, **three PostgreSQL helper cases**, and actual TCP faults, pool saturation, SIGTERM, PostgreSQL standby promotion, bounded tablespace exhaustion, and RabbitMQ restart/retry/DLQ recovery checks. The [current validation record](docs/validation.md) distinguishes each tested condition from deployment-specific guarantees. Existing 0.1.0 installations keep schema v2 without a migration.
+The 0.2.0 follow-up adds **20 testing-helper unit checks**, **three PostgreSQL helper cases**, and actual TCP faults, pool saturation, SIGTERM, PostgreSQL standby promotion, bounded tablespace exhaustion, and RabbitMQ restart/retry/DLQ recovery checks. The [current validation record](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/validation.md) distinguishes each tested condition from deployment-specific guarantees. Existing 0.1.0 installations keep schema v2 without a migration.
 
 A lost commit response is tested by error injection after a real commit. Separate operational tests exercise actual connection loss and blackholes, standby promotion after confirmed WAL replay, business-tablespace ENOSPC, and bounded pool pressure. Automatic failover routing, unreplicated commit loss, WAL-volume exhaustion, and application-specific soak tests remain deployment concerns.
 
@@ -122,13 +122,13 @@ Environment: Apple M1 Pro, Node 24.22.1, PostgreSQL 16.15 in Docker on **tmpfs**
 
 The implementation uses partial indexes for due work and expired leases, `SKIP LOCKED` claims, and bounded worker concurrency. Tune concurrency and pool capacity against your own handler and database. Default polling adds scheduling delay beyond the receive latency above.
 
-[All measurements, raw JSON, and methodology](docs/benchmarks/2026-10-28-preview1-local.md) are available to inspect. Reproduce the benchmark against a disposable database:
+[All measurements, raw JSON, and methodology](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/benchmarks/2026-10-28-preview1-local.md) are available to inspect. Reproduce the benchmark against a disposable database:
 
 ```sh
 npm run benchmark
 ```
 
-For simultaneous ingress and processing on a disk-backed fixture, run `npm run benchmark:sustained`. The [sustained load report](docs/benchmarks/2026-10-28-sustained-local.md) records overload recovery, pool waiting, hot/cold tenant latency, and payload retention. It is a separate workload from the short acceptance benchmark above.
+For simultaneous ingress and processing on a disk-backed fixture, run `npm run benchmark:sustained`. The [sustained load report](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/benchmarks/2026-10-28-sustained-local.md) records overload recovery, pool waiting, hot/cold tenant latency, and payload retention. It is a separate workload from the short acceptance benchmark above.
 
 ## Integrate with NestJS
 
@@ -263,13 +263,13 @@ channel.ack(message);
 
 Both `accepted` and `duplicate` permit acknowledgment: Inbox now owns processing retries. If acceptance throws or its commit outcome is uncertain, do not ACK; redeliver the same identity. Authentication errors, malformed input, and identity conflicts need a rejection or dead-letter policy. See the [transport examples](examples/README.md) for complete handling.
 
-The worker is opt-in and polls every 1,000 ms by default; acceptance does not wait for the handler. Check `InboxAdminService.forTenant(id).get(receipt.id)` or `stats()` for processing progress. Close the Nest application before disconnecting its Prisma client; Inbox does not own that client. For dependency-injected clients and services, use [`forRootAsync`](docs/usage.md#register-a-consumer).
+The worker is opt-in and polls every 1,000 ms by default; acceptance does not wait for the handler. Check `InboxAdminService.forTenant(id).get(receipt.id)` or `stats()` for processing progress. Close the Nest application before disconnecting its Prisma client; Inbox does not own that client. For dependency-injected clients and services, use [`forRootAsync`](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/usage.md#register-a-consumer).
 
 ## Recovery and integrations
 
 Failures retry with persisted exponential backoff and jitter. Permanent errors or exhausted attempts become **DEAD**, where operators can inspect and requeue them with an expected version. An explicit replay creates a **new receipt** for a completed message and preserves the original; it deliberately permits another business execution.
 
-Completed payload cleanup preserves the deduplication fingerprint and replay lineage. Deleting receipts or restoring an older database backup reduces the deduplication history. [Retries, retention, administration, and replay](docs/usage.md)
+Completed payload cleanup preserves the deduplication fingerprint and replay lineage. Deleting receipts or restoring an older database backup reduces the deduplication history. [Retries, retention, administration, and replay](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/usage.md)
 
 | Example                         | What it demonstrates                                                       |
 | ------------------------------- | -------------------------------------------------------------------------- |
@@ -303,8 +303,8 @@ npm run test:broker-recovery
 
 Database checks require Docker. Set `INBOX_TEST_POSTGRES_IMAGE=postgres:18-alpine` to select PostgreSQL 18 for the general fixture; its default is 16. The dedicated `test:operations:database` primary/standby and ENOSPC suite is pinned to PostgreSQL 16.
 
-CI and releases share a Node 22/24 × PostgreSQL 16/18 validation workflow. A GitHub Release is configured to publish the exact tested tarball through npm OIDC: prereleases to `next`, release versions such as 0.2.0 to `latest`. A separate Node 24/PostgreSQL 16 gate checks operational recovery. Manual runs only validate and dry-run. [Release setup and publishing procedure](docs/releasing.md)
+CI and releases share a Node 22/24 × PostgreSQL 16/18 validation workflow. A GitHub Release is configured to publish the exact tested tarball through npm OIDC: prereleases to `next`, release versions such as 0.2.0 to `latest`. A separate Node 24/PostgreSQL 16 gate checks operational recovery. Manual runs only validate and dry-run. [Release setup and publishing procedure](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/releasing.md)
 
-[Changelog](CHANGELOG.md) · [Full usage guide](docs/usage.md) · [Validation record](docs/validation.md) · [Architecture decision](docs/adr/0001-durable-inbox.md) · [Roadmap](docs/implementation-roadmap.md)
+[Changelog](CHANGELOG.md) · [Full usage guide](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/usage.md) · [Validation record](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/validation.md) · [Architecture decision](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/adr/0001-durable-inbox.md) · [Roadmap](https://github.com/nestarc/inbox/blob/a8f1fce01fa9e6c002b13bf8d561fdeca73efd21/docs/implementation-roadmap.md)
 
 MIT licensed.
